@@ -1,0 +1,13 @@
+# run "pip install -r requirements.txt"
+
+torch>=2.0
+torchaudio>=2.0
+librosa>=0.10.0
+soundfile
+numpy
+scikit-learn
+tqdm
+pyyaml
+tensorboard
+matplotlib
+pandas
