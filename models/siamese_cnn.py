@@ -14,10 +14,10 @@ class AudioBranch(nn.Module):
             nn.Conv2d(32, 64, 3, padding=1), nn.BatchNorm2d(64), nn.ReLU(), nn.MaxPool2d(2),
             nn.Conv2d(64, 128, 3, padding=1), nn.BatchNorm2d(128), nn.ReLU(), nn.MaxPool2d(2)
         )
-        self.attn = MultiHeadSelfAttention(128, num_heads=4)
-        self.drop2d = nn.Dropout2d(0.3)
+        self.attn = MultiHeadSelfAttention(128, num_heads=8)
+        self.drop2d = nn.Dropout2d(0.5)
         self.pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Linear(128, 256)
+        self.fc = nn.Linear(128, 128)
 
     def forward(self, x):
         """
@@ -25,10 +25,14 @@ class AudioBranch(nn.Module):
             and a dense (fc) layer and normalizes the output.
         
         Output:
-            L2 normalized 256-D vector, which is what StacLoss tries to push/pull together/apart
+            L2 normalized 128-D vector, which is what StacLoss tries to push/pull together/apart
         """
-        x = self.conv(x)
-        x = self.attn(x)
+        x1 = self.conv[0:4](x)
+        x2 = self.conv[4:8](x1)
+        x3 = self.conv[8:](x2)
+        if x2.shape == x3.shape: 
+            x3 = x3 + x2  # residual
+        x = self.attn(x3)
         x = self.drop2d(x)
         x = self.pool(x).flatten(1) # (B, 128)
         x = self.fc(x) # (B, 256)
