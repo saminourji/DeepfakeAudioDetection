@@ -32,6 +32,8 @@ class AudioBranch(nn.Module):
         x3 = self.conv[8:](x2)
         if x2.shape == x3.shape: 
             x3 = x3 + x2  # residual
+        else:
+            raise ValueError("Shape mismatch between x2 and x3; no residual connection") #maybe use 1x1 conv if this is an issue
         x = self.attn(x3)
         x = self.drop2d(x)
         x = self.pool(x).flatten(1) # (B, 128)
@@ -41,15 +43,12 @@ class AudioBranch(nn.Module):
 class SiameseCNN(nn.Module):
     def __init__(self, in_channels: int = 1):
         super().__init__()
-        self.branch = AudioBranch(in_channels)
-
-    def encode(self, x: torch.Tensor) -> torch.Tensor:
-        """ Method to produce a single feature embedding, called once for each of anchor, positive, and negative """
-        return self.branch(x)
+        self.branch1 = AudioBranch(in_channels)
+        self.branch2 = AudioBranch(in_channels)
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor):
         """ Method used in inference / testing to produce similarity score for a single pair of inputs """
-        z1, z2 = self.encode(x1), self.encode(x2)
+        z1, z2 = self.branch1(x1), self.branch2(x2)
         return F.pairwise_distance(z1, z2)
 
     def predict_real_fake(self, x1: torch.Tensor, x2: torch.Tensor, threshold: float = 1.0):
