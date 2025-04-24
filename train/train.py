@@ -34,9 +34,8 @@ def run_epoch(model, loader, loss_fn, optimizer=None):
 
     for A,P,N in loader:
         A,P,N = A.to(DEVICE), P.to(DEVICE), N.to(DEVICE)
-        fA,fP,fN = model.encode(A), model.encode(P), model.encode(N)
-        d_pos = pairwise_dist(fA, fP)
-        d_neg = pairwise_dist(fA, fN)
+        d_pos = model.forward(A, P)
+        d_neg = model.forward(A, N)
         loss = loss_fn(d_pos, d_neg)
         if is_train:
             optimizer.zero_grad()
