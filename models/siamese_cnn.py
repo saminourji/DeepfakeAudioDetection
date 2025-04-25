@@ -43,12 +43,11 @@ class AudioBranch(nn.Module):
 class SiameseCNN(nn.Module):
     def __init__(self, in_channels: int = 1):
         super().__init__()
-        self.branch1 = AudioBranch(in_channels)
-        self.branch2 = AudioBranch(in_channels)
+        self.branch = AudioBranch(in_channels)
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor):
         """ Method used in inference / testing to produce similarity score for a single pair of inputs """
-        z1, z2 = self.branch1(x1), self.branch2(x2)
+        z1, z2 = self.branch(x1), self.branch(x2)
         return F.pairwise_distance(z1, z2)
 
     def predict_real_fake(self, x1: torch.Tensor, x2: torch.Tensor, threshold: float = 1.0):
