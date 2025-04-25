@@ -1,4 +1,4 @@
-#!/Users/andrewkim/Documents/Brown/year2/cs1470/projects/DeepfakeAudioDetection/env/bin/python
+#!/Users/andrewkim/Documents/Brown/year2/cs1470/projects/DeepfakeAudioDetection/env/bin/python3.10
 # -*- coding: utf-8 -*-
 import re
 import sys
