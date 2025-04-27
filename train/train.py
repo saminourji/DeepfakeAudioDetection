@@ -6,8 +6,8 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-from models.siamese_cnn import SiameseCNN
-from models.stac_loss import StacLoss
+from model.siamese_cnn import SiameseCNN
+from model.stac_loss import StacLoss
 from data.datasets import TripletAudioDataset, BalancedBatchSampler, batch_hard_triplet_loss
 
 """

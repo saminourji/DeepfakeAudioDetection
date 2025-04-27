@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from sklearn.metrics import roc_auc_score, roc_curve, accuracy_score
-from models.siamese_cnn import SiameseCNN
+from model.siamese_cnn import SiameseCNN
 from train.datasets import TripletAudioDataset
 
 """

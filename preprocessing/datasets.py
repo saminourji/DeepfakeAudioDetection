@@ -10,7 +10,7 @@ PRE-PROCESSES DATA FOR MODEL
 from torch.utils.data import Dataset
 from torch.utils.data import Sampler
 import torch, torch.nn.functional as F
-from .utils import preprocess_folder
+from utils import preprocess_folder
 from collections import defaultdict
 import os
 import random
@@ -195,10 +195,22 @@ def batch_hard_triplet_loss(embedding: torch.Tensor, labels: torch.Tensor, speak
 
 # run datasets.py to load tensors
 if __name__ == "__main__":
-    input_path = "processed/ASVspoof2021_LA_eval/flac"
-    output_path = "processed/tensors"
-    metadata_path = "processed/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
-    mfcc_dir = "processed/tensors"
+
+    # in case downloaded ASVspoof 2019
+    folder = "LA"
+    for root, dirs, files in os.walk(folder):
+        for name in files + dirs:
+            if "ASVspoof2019" in name:
+                old_path = os.path.join(root, name)
+                new_name = name.replace("ASVspoof2019", "ASVspoof2021")
+                new_path = os.path.join(root, new_name)
+                os.rename(old_path, new_path)
+
+    
+    input_path = "data/ASVspoof2021_LA_eval/flac"
+    output_path = "data/tensors"
+    metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
+    mfcc_dir = "data/tensors"
 
     #preprocess_folder(input_path, output_path)
 
