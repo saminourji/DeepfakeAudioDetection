@@ -86,3 +86,13 @@ if __name__ == "__main__":
     
     #for i in range(len(triplet_dataset)):
         #print(triplet_dataset[i])
+    
+"""
+Here's my goal:
+1. For each epoch, we split the dataset into batches. These will act as pre-computed batches.
+2. Within each batch, we call batch_hard_triplet_mining(), which will compute and store a dictionary.
+    2a. The dictionary, for each batch, will contain 
+
+
+
+"""
