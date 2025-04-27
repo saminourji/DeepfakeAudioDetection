@@ -1,10 +1,14 @@
-from preprocessing.datasets import TripletAudioDataset
+from preprocess.datasets import TripletAudioDataset
 import torch
+import os
 
-input_path = "data/processed/ASVspoof2021_LA_eval/flac"
-output_path = "data/processed/tensors"
-metadata_path = "data/processed/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
-mfcc_dir = "data/processed/tensors"
+input_path = "data/ASVspoof2021_LA_eval/flac"
+output_path = "data/tensors"
+if os.path.isdir("data/ASVspoof2021_LA_cm_protocols/"):
+    metadata_path = "data/ASVspoof2021_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
+else:
+    metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
+mfcc_dir = "data/tensors"
 
 triplet_dataset = TripletAudioDataset(metadata_path, mfcc_dir)
 

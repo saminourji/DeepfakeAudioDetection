@@ -27,7 +27,7 @@ class TripletAudioDataset(Dataset):
                 parts = line.strip().split()
                 speaker_id = parts[0]
                 file_id = parts[1]
-                label_text = parts[5]
+                label_text = parts[4]
                 file_name = file_id + ".pt"
                 label = 1 if label_text == "bonafide" else 0
                 self.items.append((file_name, label, speaker_id))
@@ -193,7 +193,7 @@ def batch_hard_triplet_loss(embedding: torch.Tensor, labels: torch.Tensor, speak
     loss = F.relu(hardest_pos - hardest_neg + margin)
     return loss.mean()
 
-# run datasets.py to load tensors
+####   BEFORE RUNNING THIS, REFER TO THE README FOR INSTRUCTIONS ON HOW TO DOWNLOAD THE DATA   ####
 if __name__ == "__main__":
 
     # in case downloaded ASVspoof 2019
@@ -206,10 +206,13 @@ if __name__ == "__main__":
                 new_path = os.path.join(root, new_name)
                 os.rename(old_path, new_path)
 
-    
+    #preprocess
     input_path = "data/ASVspoof2021_LA_eval/flac"
     output_path = "data/tensors"
-    metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
+    if os.path.isdir("data/ASVspoof2021_LA_cm_protocols/"):
+        metadata_path = "data/ASVspoof2021_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
+    else:
+        metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
     mfcc_dir = "data/tensors"
 
     #preprocess_folder(input_path, output_path)
