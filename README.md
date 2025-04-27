@@ -2,12 +2,19 @@
 
 ## Downloading the Dataset 
 
-To obtain the dataset, run the following command in your terminal:
+1. Download the dataset by running the following command in your terminal:
 ```bash
 wget -v https://datashare.ed.ac.uk/bitstream/handle/10283/3336/LA.zip
 ```
 
 This will download the **LA.zip** file containing the data
+
+2. Extract the contents of the zip file:
+    ```bash
+    unzip LA.zip
+    ```
+
+    This will create a directory containing the dataset files.
 
 Make sure you have wget installed. If not, you can install it using your system’s package manager:
 - On Ubuntu/Debian: `sudo apt-get install wget`
