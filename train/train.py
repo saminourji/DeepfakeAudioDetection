@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import torch
 import numpy as np
@@ -5,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from models.siamese_cnn import SiameseCNN
 from models.stac_loss import StacLoss
-from train.datasets import TripletAudioDataset
+from data.datasets import TripletAudioDataset, BalancedBatchSampler, batch_hard_triplet_loss
 
 """
 RUNS TRAINING LOOP 
@@ -32,16 +35,19 @@ def run_epoch(model, loader, loss_fn, optimizer=None):
     model.train() if is_train else model.eval()
     total_loss = 0.0
 
-    for A,P,N in loader:
-        A,P,N = A.to(DEVICE), P.to(DEVICE), N.to(DEVICE)
-        d_pos = model.forward(A, P)
-        d_neg = model.forward(A, N)
-        loss = loss_fn(d_pos, d_neg)
+    for x, y, speaker in loader:
+        x = x.to(DEVICE)
+        y = y.to(DEVICE)
+        spk = spk.to(DEVICE)
+
+        embedding = model.encode(x) # shape is (B, dimensionality of embedding)
+        loss = batch_hard_triplet_loss(embedding, y, spk, margin=MARGIN)
         if is_train:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        total_loss+=loss.item()
+        total_loss += loss.item()
+    
     return total_loss/len(loader)
 
 
