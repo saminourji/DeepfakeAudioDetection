@@ -1,4 +1,4 @@
-from data.datasets import TripletAudioDataset
+from preprocessing.datasets import TripletAudioDataset
 import torch
 
 input_path = "data/processed/ASVspoof2021_LA_eval/flac"
