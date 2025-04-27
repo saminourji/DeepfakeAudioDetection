@@ -25,6 +25,7 @@ mfcc_transform = MFCC(
 
 # takes a filepath of a .flac file and returns a processed tensor of shape (13, T)
 def preprocess_audio(filepath, max_frames=400):
+    torchaudio.set_audio_backend("soundfile") # added recently
     waveform, sample_rate = torchaudio.load(filepath)
 
     if waveform.shape[0] > 1: # "if waveform is NOT mono"
@@ -55,6 +56,8 @@ def preprocess_folder(input_dir, output_dir):
     os.makedirs(output_dir, exist_ok=True) # ensures that the directory exists
     flac_files = [f for f in os.listdir(input_dir) if f.endswith('.flac')]
 
+    num_processed = 0
+    num_failed = 0
     for fname in tqdm(flac_files, desc=f"Processing {input_dir}"):
         input_path = os.path.join(input_dir, fname)
         output_path = os.path.join(output_dir, fname.replace(".flac", ".pt"))
@@ -63,5 +66,9 @@ def preprocess_folder(input_dir, output_dir):
             mfcc = preprocess_audio(input_path)
             torch.save(mfcc, output_path)
             print(f"Created tensor for {fname}")
+            num_processed += 1
         except Exception as e:
             print(f"Skipping {fname}: {e}")
+            num_failed += 1
+    
+    print(f"PROCESSED {num_processed / (num_processed + num_failed)}")
