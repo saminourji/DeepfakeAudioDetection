@@ -5,8 +5,10 @@ PRE-PROCESSES DATA FOR MODEL
 - prepares batches for model
 """
 
+# sets root path as the root folder DeepFakeAudioDetection
+
 from torch.utils.data import Dataset
-from utils import preprocess_folder
+from .utils import preprocess_folder
 from collections import defaultdict
 import os
 import random
