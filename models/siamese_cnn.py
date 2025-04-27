@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from attention import MultiHeadSelfAttention
+from models.attention import MultiHeadSelfAttention
 
 """
 MAIN SIAMESE CNN ARCHITECTURE
@@ -9,11 +9,24 @@ MAIN SIAMESE CNN ARCHITECTURE
 class AudioBranch(nn.Module):
     def __init__(self, in_channels: int = 1):
         super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),
-            nn.Conv2d(32, 64, 3, padding=1), nn.BatchNorm2d(64), nn.ReLU(), nn.MaxPool2d(2),
-            nn.Conv2d(64, 128, 3, padding=1), nn.BatchNorm2d(128), nn.ReLU(), nn.MaxPool2d(2)
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels, 32, 3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
         )
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU()
+        )
+        self.residual_conv = nn.Conv2d(64, 128, kernel_size=1)
         self.attn = MultiHeadSelfAttention(128, num_heads=8)
         self.drop2d = nn.Dropout2d(0.5)
         self.pool = nn.AdaptiveAvgPool2d(1)
@@ -27,17 +40,18 @@ class AudioBranch(nn.Module):
         Output:
             L2 normalized 128-D vector, which is what StacLoss tries to push/pull together/apart
         """
-        x1 = self.conv[0:4](x)
-        x2 = self.conv[4:8](x1)
-        x3 = self.conv[8:](x2)
-        if x2.shape == x3.shape: 
-            x3 = x3 + x2  # residual
-        else:
-            raise ValueError("Shape mismatch between x2 and x3; no residual connection") #maybe use 1x1 conv if this is an issue
+        x1 = self.conv1(x)
+        x2 = self.conv2(x1)
+        x3 = self.conv3(x2)
+        if x2.shape != x3.shape:
+                    x2 = self.residual_conv(x2)  # project (B, 64, H/4, W/4) -> (B, 128, H/4, W/4)
+
+        x3 = x3 + x2
+
         x = self.attn(x3)
         x = self.drop2d(x)
-        x = self.pool(x).flatten(1) # (B, 128)
-        x = self.fc(x) # (B, 256)
+        x = self.pool(x).flatten(1)
+        x = self.fc(x)
         return nn.functional.normalize(x, p=2, dim=1)
 
 class SiameseCNN(nn.Module):
