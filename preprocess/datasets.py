@@ -106,7 +106,7 @@ class TripletAudioDataset(Dataset):
         # return self.triplets[index]
         file_name, label, speaker = self.items[index]
         tensor = torch.load(os.path.join(self.mfcc_dir, file_name)).unsqueeze(0)
-        return tensor, torch.tensor(label), torch.tensor(speaker)
+        return tensor, torch.tensor(label), torch.tensor(int(speaker[3:]))
 
 class BalancedBatchSampler(Sampler):
     """
