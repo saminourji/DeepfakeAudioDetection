@@ -45,7 +45,7 @@ class TripletAudioDataset(Dataset):
             tensor = torch.cat([tensor[:, :k, :],
              tensor[:, k+1:, :]], dim=1) # size now (1,12,T)
 
-        return tensor, torch.tensor(label), torch.tensor(speaker)
+        return tensor, label, speaker
 
 class BalancedBatchSampler(Sampler):
     """
