@@ -62,8 +62,9 @@ class TripletAudioDataset(Dataset):
         return len(self.triplets)
 
     def __getitem__(self, index):
-        spk, anchor_file, pos_file, neg_file, anchor_label = self.triplets[index]
-        return anchor_file, pos_file, neg_file, torch.tensor(anchor_label)
+        file_name, label, speaker = self.items[index]
+        tensor = torch.load(os.path.join(self.mfcc_dir, file_name)).unsqueeze(0)
+        return tensor, torch.tensor(label), torch.tensor(speaker)
 
     def summarize(self):
         all_files = []
