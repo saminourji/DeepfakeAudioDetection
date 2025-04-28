@@ -20,6 +20,7 @@ BATCH_SIZE = 64
 EPOCHS = 100
 PATIENCE = 10
 MARGIN = 1.0
+ABLATE_IDX = None
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -38,7 +39,7 @@ def run_epoch(model, loader, loss_fn, optimizer=None):
     for x, y, speaker in loader:
         x = x.to(DEVICE)
         y = y.to(DEVICE)
-        spk = spk.to(DEVICE)
+        speaker = speaker.to(DEVICE)
 
         embedding = model.encode(x) # shape is (B, dimensionality of embedding)
         loss = batch_hard_triplet_loss(embedding, y, spk, margin=MARGIN)
@@ -53,7 +54,8 @@ def run_epoch(model, loader, loss_fn, optimizer=None):
 
 def main():
     # expects .pt files of shape [N,1,T,F]
-    train_ds = TripletAudioDataset('../data/processed/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt', '../data/processed/tensors')
+    train_ds = TripletAudioDataset('../data/processed/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt', 
+    '../data/processed/tensors', ablate_idx = ABLATE_IDX)
     # val_ds = TripletAudioDataset()
 
     train_loader = DataLoader(
