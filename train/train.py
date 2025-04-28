@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from model.siamese_cnn import SiameseCNN
 from model.stac_loss import StacLoss
-from data.datasets import TripletAudioDataset, BalancedBatchSampler, batch_hard_triplet_loss
+from preprocess.datasets import TripletAudioDataset, BalancedBatchSampler, batch_hard_triplet_loss
 
 """
 RUNS TRAINING LOOP 
@@ -20,7 +20,7 @@ BATCH_SIZE = 64
 EPOCHS = 100
 PATIENCE = 10
 MARGIN = 1.0
-ABLATE_IDX = None
+ABLATE_IDX = 0 # MUST RANGE FROM 0 TO 12
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -54,8 +54,11 @@ def run_epoch(model, loader, loss_fn, optimizer=None):
 
 def main():
     # expects .pt files of shape [N,1,T,F]
-    train_ds = TripletAudioDataset('../data/processed/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt', 
-    '../data/processed/tensors', ablate_idx = ABLATE_IDX)
+    train_ds = TripletAudioDataset(metadata_path='../data/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt',
+                                   mfcc_dir='../data/tensors', ablate_idx=ABLATE_IDX)
+
+    # train_ds = TripletAudioDataset('../data/processed/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt', 
+    # '../data/processed/tensors', ablate_idx = ABLATE_IDX)
     # val_ds = TripletAudioDataset()
 
     train_loader = DataLoader(

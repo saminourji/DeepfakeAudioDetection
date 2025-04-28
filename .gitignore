@@ -1,5 +1,13 @@
 env/
 data/processed/
 data/raw/
+data/tensors/
+data/LA/
 LA/
+**/LA/
 LA.zip
+.DS_Store
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
