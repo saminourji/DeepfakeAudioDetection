@@ -3,6 +3,9 @@ import torch
 import os
 from preprocess.utils import preprocess_folder
 
+### BEFORE RUNNING THIS, MAKE SURE YOU RUN   'interact -n 20 -t 02:00:00 -m 20g' ###
+
+
 input_path = "data/ASVspoof2021_LA_eval/flac"
 if os.path.isdir("data/ASVspoof2021_LA_cm_protocols/"):
     metadata_path = "data/ASVspoof2021_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
