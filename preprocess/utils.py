@@ -13,6 +13,8 @@ from torchaudio.transforms import MFCC, Resample
 from collections import defaultdict
 import concurrent.futures
 
+import multiprocessing
+multiprocessing.set_start_method("forkserver", force=True)
 
 ### GLOBAL VARIABLES ###
 SAMPLE_RATE = 16000
@@ -27,7 +29,6 @@ mfcc_transform = MFCC(
 
 # takes a filepath of a .flac file and returns a processed tensor of shape (13, T)
 def preprocess_audio(filepath, max_frames=400):
-    torchaudio.set_audio_backend("soundfile") # added recently
     waveform, sample_rate = torchaudio.load(filepath)
 
     if waveform.shape[0] > 1: # "if waveform is NOT mono"
@@ -54,7 +55,22 @@ def preprocess_audio(filepath, max_frames=400):
 
 # applies preprocess_audio to a collection of .flac audio files by looping over them
 # saves them to a folder
-def preprocess_folder(input_dir, output_dir, max_workers=20):
+def process_file(args):
+    input_path, input_dir, output_dir = args
+    relative_path = os.path.relpath(input_path, input_dir)
+    output_path = os.path.join(output_dir, relative_path.replace(".flac", ".pt"))
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    try:
+        mfcc = preprocess_audio(input_path)
+        torch.save(mfcc, output_path)
+        return True
+    except Exception as e:
+        print(f"Skipping {input_path}: {e}")
+        return False
+
+import os
+
+def preprocess_folder(input_dir, output_dir, max_workers=None):
     os.makedirs(output_dir, exist_ok=True)
     flac_files = []
     for root, _, files in os.walk(input_dir):
@@ -62,21 +78,14 @@ def preprocess_folder(input_dir, output_dir, max_workers=20):
             if f.endswith('.flac'):
                 flac_files.append(os.path.join(root, f))
 
-    def process_file(input_path):
-        relative_path = os.path.relpath(input_path, input_dir)
-        output_path = os.path.join(output_dir, relative_path.replace(".flac", ".pt"))
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        try:
-            mfcc = preprocess_audio(input_path)
-            torch.save(mfcc, output_path)
-            return True
-        except Exception as e:
-            print(f"Skipping {input_path}: {e}")
-            return False
+    if max_workers is None:
+        max_workers = max(1, os.cpu_count() - 1)  # Use all but 1 CPU core
 
     num_processed = 0
+    args_list = [(f, input_dir, output_dir) for f in flac_files]
+
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        for success in tqdm(executor.map(process_file, flac_files), total=len(flac_files)):
+        for success in tqdm(executor.map(process_file, args_list, chunksize=100), total=len(flac_files)):
             if success:
                 num_processed += 1
 
