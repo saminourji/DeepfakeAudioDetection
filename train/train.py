@@ -42,7 +42,7 @@ def run_epoch(model, loader, loss_fn, optimizer=None):
         speaker = speaker.to(DEVICE)
 
         embedding = model.encode(x) # shape is (B, dimensionality of embedding)
-        loss = batch_hard_triplet_loss(embedding, y, spk, margin=MARGIN)
+        loss = batch_hard_triplet_loss(embedding, y, speaker, margin=MARGIN)
         if is_train:
             optimizer.zero_grad()
             loss.backward()

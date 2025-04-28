@@ -10,7 +10,7 @@ PRE-PROCESSES DATA FOR MODEL
 from torch.utils.data import Dataset
 from torch.utils.data import Sampler
 import torch, torch.nn.functional as F
-# from .utils import preprocess_folder
+from .utils import preprocess_folder
 from collections import defaultdict
 import os
 import random
