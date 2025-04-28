@@ -6,12 +6,18 @@ from preprocess.utils import preprocess_folder
 ### BEFORE RUNNING THIS, MAKE SURE YOU RUN   'interact -n 20 -t 02:00:00 -m 20g' ###
 
 
-input_path = "data/ASVspoof2021_LA_eval/flac"
-if os.path.isdir("data/ASVspoof2021_LA_cm_protocols/"):
-    metadata_path = "data/ASVspoof2021_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
+input_path = "data/LA/ASVspoof2019_LA_train/flac"
+if os.path.isdir("data/LA/ASVspoof2019_LA_cm_protocols/"):
+    metadata_path = "data/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt"
 else:
-    metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
+    raise ValueError("THIS SHOULD NOT HAPPEN!")
 mfcc_dir = "data/tensors"
+# input_path = "data/ASVspoof2021_LA_eval/flac"
+# if os.path.isdir("data/ASVspoof2021_LA_cm_protocols/"):
+#     metadata_path = "data/ASVspoof2021_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
+# else:
+#     metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
+# mfcc_dir = "data/tensors"
 
 
 # Count number of .flac files to process
@@ -35,9 +41,13 @@ if len(pt_files) < len(flac_files):
 else:
     print(f"Preprocessing already completed: {len(pt_files)} tensors found.")
 
-triplet_dataset = TripletAudioDataset(metadata_path, mfcc_dir)
+################ BREAK ################
+# By this point, we have a directory in data called 'tensors' which contains the .pt files
 
 
+
+
+# triplet_dataset = TripletAudioDataset(metadata_path, mfcc_dir)
 # triplets_list = []
 # for i in range(10):
 #     anchor, positive, negative = triplet_dataset[i]

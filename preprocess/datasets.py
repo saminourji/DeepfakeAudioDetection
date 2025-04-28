@@ -18,7 +18,7 @@ import torch
 # import torchaudio
 
 class TripletAudioDataset(Dataset):
-    def __init__(self, metadata_path, mfcc_dir, ablate_idx: int | None = None):
+    def __init__(self, metadata_path, mfcc_dir, ablate_idx: int = None):
         super().__init__()
         self.mfcc_dir = mfcc_dir
         self.ablate_idx = ablate_idx
@@ -28,7 +28,7 @@ class TripletAudioDataset(Dataset):
                 parts = line.strip().split()
                 speaker_id = parts[0]
                 file_id = parts[1]
-                label_text = parts[4]
+                label_text = parts[-1]
                 file_name = file_id + ".pt"
                 label = 1 if label_text == "bonafide" else 0
                 self.items.append((file_name, label, speaker_id))

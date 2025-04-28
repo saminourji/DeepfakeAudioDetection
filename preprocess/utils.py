@@ -86,17 +86,15 @@ def extract_file_paths_from_metadata(metadata_path, input_base_dir):
             file_paths.append(file_path)
     return file_paths
 
-if __name__ == "__main__":
-    input_path = "data/ASVspoof2021_LA_eval/flac"
-    output_path = "data/tensors"
-    if os.path.isdir("data/ASVspoof2021_LA_cm_protocols/"):
-        metadata_path = "data/ASVspoof2021_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
-    else:
-        metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
-    mfcc_dir = "data/tensors"
-
-    flac_files = extract_file_paths_from_metadata(metadata_path, input_path)
-
-    with open("flac_files.txt", "w") as f:
-        for file in flac_files:
-            f.write(file + "\n")
+# if __name__ == "__main__":
+#     input_path = "data/ASVspoof2021_LA_eval/flac"
+#     output_path = "data/tensors"
+#     if os.path.isdir("data/ASVspoof2021_LA_cm_protocols/"):
+#         metadata_path = "data/ASVspoof2021_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt"
+#     else:
+#         metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
+#     mfcc_dir = "data/tensors"
+#     flac_files = extract_file_paths_from_metadata(metadata_path, input_path)
+#     with open("flac_files.txt", "w") as f:
+#         for file in flac_files:
+#             f.write(file + "\n")
