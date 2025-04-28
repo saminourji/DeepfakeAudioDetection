@@ -1,6 +1,5 @@
 env/
 data/processed/
 data/raw/
-**/LA/
-data/
+LA/
 LA.zip
