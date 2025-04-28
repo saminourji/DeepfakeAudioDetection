@@ -21,7 +21,7 @@ RUNS TRAINING LOOP
 # hyperparameters
 LR = 1e-3
 BATCH_SIZE = 64
-EPOCHS = 100
+EPOCHS = 500
 MARGIN = 1.0
 ABLATE_IDX = os.environ.get('ABLATE_IDX')
 ABLATE_IDX = int(ABLATE_IDX) if ABLATE_IDX is not None else None
