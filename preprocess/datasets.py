@@ -18,9 +18,10 @@ import torch
 # import torchaudio
 
 class TripletAudioDataset(Dataset):
-    def __init__(self, metadata_path, mfcc_dir):
+    def __init__(self, metadata_path, mfcc_dir, ablate_idx: int | None = None):
         super().__init__()
         self.mfcc_dir = mfcc_dir
+        self.ablate_idx = ablate_idx
         self.items = [] # list of (file_name, label, speaker_id)
         with open(metadata_path) as f:
             for line in f:
@@ -106,6 +107,11 @@ class TripletAudioDataset(Dataset):
         # return self.triplets[index]
         file_name, label, speaker = self.items[index]
         tensor = torch.load(os.path.join(self.mfcc_dir, file_name)).unsqueeze(0)
+        if self.ablate_idx is not None:
+            k = self.ablate_idx
+            tensor = torch.cat([tensor[:, :k, :],
+             tensor[:, k+1:, :]], dim=1) # size now (1,12,T)
+
         return tensor, torch.tensor(label), torch.tensor(int(speaker[3:]))
 
 class BalancedBatchSampler(Sampler):
