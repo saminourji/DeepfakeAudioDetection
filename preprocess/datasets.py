@@ -21,10 +21,7 @@ class TripletAudioDataset(Dataset):
     def __init__(self, metadata_path, mfcc_dir):
         super().__init__()
         self.mfcc_dir = mfcc_dir
-        self.speaker_to_bonafide = defaultdict(list)
-        self.speaker_to_spoof = defaultdict(list)
-        self.triplets = []
-
+        self.items = [] # list of (file_name, label, speaker_id)
         with open(metadata_path) as f:
             for line in f:
                 parts = line.strip().split()
@@ -33,58 +30,83 @@ class TripletAudioDataset(Dataset):
                 label_text = parts[4]
                 file_name = file_id + ".pt"
                 label = 1 if label_text == "bonafide" else 0
+                self.items.append((file_name, label, speaker_id))
+        print(f"Loaded {len(self.items):,} utterances")
 
-                if label == 1:
-                    self.speaker_to_bonafide[speaker_id].append(file_name)
-                else:
-                    self.speaker_to_spoof[speaker_id].append(file_name)
 
-        self.build_all_triplets()
-        self.summarize()
+        ############ ALL BELOW INCLUDED IN PREV AND RECENT ############
+        # self.triplets = [] # Triplets in the form: (speaker, anchor_file, pos_file, neg_file, anchor_label)
+        # self.mfcc_dir = mfcc_dir
+        # self.speaker_to_bonafide = defaultdict(list)
+        # self.speaker_to_spoof = defaultdict(list)
 
-    def build_triplets(self, spk, same, opp, anchor_label):
-        for anchor_file in same:
-            candidates = [f for f in same if f != anchor_file]
-            if not candidates:
-                continue
-            pos_file = random.choice(candidates)
-            neg_file = random.choice(opp)
-            self.triplets.append((spk, anchor_file, pos_file, neg_file, anchor_label))
+        # # Reads the metadata file
+        # with open(metadata_path, "r") as f:
+        #     for line in f:
+        #         parts = line.strip().split()
+        #         speaker_id = parts[0]
+        #         file_id = parts[1]
+        #         label = parts[5]
+        #         file_name = file_id + ".pt"
 
-    def build_all_triplets(self):
-        for spk in self.speaker_to_bonafide.keys():
-            if len(self.speaker_to_bonafide[spk]) >= 2 and len(self.speaker_to_spoof[spk]) >= 1:
-                self.build_triplets(spk, self.speaker_to_bonafide[spk], self.speaker_to_spoof[spk], anchor_label=1)
-            if len(self.speaker_to_spoof[spk]) >= 2 and len(self.speaker_to_bonafide[spk]) >= 1:
-                self.build_triplets(spk, self.speaker_to_spoof[spk], self.speaker_to_bonafide[spk], anchor_label=0)
+        #         if label == "bonafide":
+        #             self.speaker_to_bonafide[speaker_id].append(file_name)
+        #         elif label == "spoof":
+        #             self.speaker_to_spoof[speaker_id].append(file_name)
+        ############ ALL ABOVE INCLUDED IN PREV AND RECENT ############
+
+        ############# RECENT #############
+        # Build triplets
+        # for speaker in self.speaker_to_spoof.keys() | self.speaker_to_bonafide.keys():
+        #     spoofed = self.speaker_to_spoof.get(speaker, [])
+        #     bonafide = self.speaker_to_bonafide.get(speaker, [])
+        #     if len(bonafide) >= 2 and spoofed: # Anchor / Positive => BONAFIDE
+        #         self.build_triplets(spk=speaker, same=bonafide, opp=spoofed, anchor_label=1)
+        #     if len(spoofed) >= 2 and bonafide: # Anchor / Positive => SPOOFED
+        #         self.build_triplets(spk=speaker, same=spoofed, opp=bonafide, anchor_label=0)
+        # print(f"Triplets: {len(self.triplets):,}")
+
+        ############ PREVIOUS ############
+        # num_success = 0.0
+        # num_fails = 0.0
+        # for speaker in self.speaker_to_spoof:
+        #     if speaker not in self.speaker_to_bonafide or len(self.speaker_to_bonafide[speaker]) < 2:
+        #         continue
+        #     for spoof_file in self.speaker_to_spoof[speaker]:
+        #         anchor_file = random.choice(self.speaker_to_bonafide[speaker])
+        #         positive_candidates = [f for f in self.speaker_to_bonafide[speaker] if f != anchor_file]
+        #         if not positive_candidates:
+        #             continue
+        #         positive_file = random.choice(positive_candidates)
+        #         try:
+        #             # unsqueezes allows for a CNN to pass over it, so shape (1, 13, 400)
+        #             anchor = torch.load(os.path.join(self.mfcc_dir, anchor_file)).unsqueeze(0)
+        #             positive = torch.load(os.path.join(self.mfcc_dir, positive_file)).unsqueeze(0)
+        #             negative = torch.load(os.path.join(self.mfcc_dir, spoof_file)).unsqueeze(0)
+        #             print(f"Triplet successfully created!")
+        #             num_success += 1
+        #         except Exception as e:
+        #             print(f"Skipping triplet due to error: {e}")
+        #             num_fails += 1
+        #             continue
+        #         self.triplets.append((anchor, positive, negative))
+        # print(f"{num_success / (num_success + num_fails)} successful conversion rate")
+    
+    # def build_triplets(self, spk, same, opp, anchor_label):
+    #     for anchor_file in same:
+    #         pos_file = random.choice([f for f in same if f != anchor_file])
+    #         neg_file = random.choice(opp)
+    #         self.triplets.append((spk, anchor_file, pos_file, neg_file, anchor_label))
 
     def __len__(self):
-        return len(self.triplets)
+        # return len(self.triplets)
+        return len(self.items)
 
     def __getitem__(self, index):
+        # return self.triplets[index]
         file_name, label, speaker = self.items[index]
         tensor = torch.load(os.path.join(self.mfcc_dir, file_name)).unsqueeze(0)
         return tensor, torch.tensor(label), torch.tensor(speaker)
-
-    def summarize(self):
-        all_files = []
-        for speaker, files in self.speaker_to_bonafide.items():
-            for file in files:
-                all_files.append((speaker, file, 1))
-        for speaker, files in self.speaker_to_spoof.items():
-            for file in files:
-                all_files.append((speaker, file, 0))
-
-        total = len(all_files)
-        num_bonafide = sum(1 for _, _, label in all_files if label == 1)
-        num_spoof = total - num_bonafide
-        speakers = set(speaker for speaker, _, _ in all_files)
-
-        print("=== General Dataset Summary ===")
-        print(f"Total utterances: {total:,}")
-        print(f"Bonafide: {num_bonafide:,} ({num_bonafide/total:.2%})")
-        print(f"Spoof: {num_spoof:,} ({num_spoof/total:.2%})")
-        print(f"Unique speakers: {len(speakers):,}")
 
 class BalancedBatchSampler(Sampler):
     """
