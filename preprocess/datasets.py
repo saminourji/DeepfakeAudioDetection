@@ -10,12 +10,12 @@ PRE-PROCESSES DATA FOR MODEL
 from torch.utils.data import Dataset
 from torch.utils.data import Sampler
 import torch, torch.nn.functional as F
-from .utils import preprocess_folder
+# from .utils import preprocess_folder
 from collections import defaultdict
 import os
 import random
 import torch
-import torchaudio
+# import torchaudio
 
 class TripletAudioDataset(Dataset):
     def __init__(self, metadata_path, mfcc_dir):
@@ -64,7 +64,6 @@ class TripletAudioDataset(Dataset):
                 self.build_triplets(spk=speaker, same=bonafide, opp=spoofed, anchor_label=1)
             if len(spoofed) >= 2 and bonafide: # Anchor / Positive => SPOOFED
                 self.build_triplets(spk=speaker, same=spoofed, opp=bonafide, anchor_label=0)
-        print(f"Triplets: {len(self.triplets):,}")
 
         ############ PREVIOUS ############
         # num_success = 0.0
@@ -91,7 +90,10 @@ class TripletAudioDataset(Dataset):
         #             continue
         #         self.triplets.append((anchor, positive, negative))
         # print(f"{num_success / (num_success + num_fails)} successful conversion rate")
-    
+
+        self.summarize()
+
+    # random triplets
     def build_triplets(self, spk, same, opp, anchor_label):
         for anchor_file in same:
             pos_file = random.choice([f for f in same if f != anchor_file])
@@ -99,25 +101,45 @@ class TripletAudioDataset(Dataset):
             self.triplets.append((spk, anchor_file, pos_file, neg_file, anchor_label))
 
     def __len__(self):
-        # return len(self.triplets)
-        return len(self.items)
+        return len(self.triplets)
 
     def __getitem__(self, index):
-        # return self.triplets[index]
-        file_name, label, speaker = self.items[index]
-        tensor = torch.load(os.path.join(self.mfcc_dir, file_name)).unsqueeze(0)
-        return tensor, torch.tensor(label), torch.tensor(speaker)
-    
-    def summarize(self):
-        total = len(self.items)
-        num_bonafide = sum(1 for _, label, _ in self.items if label == 1)
-        num_spoof = total - num_bonafide
-        speakers = set(speaker_id for _, _, speaker_id in self.items)
+        spk, anchor_file, pos_file, neg_file, anchor_label = self.triplets[index]
+        
+        return anchor_file, pos_file, neg_file, torch.tensor(anchor_label)
 
+    def summarize(self):
+        # ===== General Dataset Summary =====
+        all_files = []
+        for speaker, files in self.speaker_to_bonafide.items():
+            for file in files:
+                all_files.append((speaker, file, 1))
+        for speaker, files in self.speaker_to_spoof.items():
+            for file in files:
+                all_files.append((speaker, file, 0))
+
+        total = len(all_files)
+        num_bonafide = sum(1 for _, _, label in all_files if label == 1)
+        num_spoof = total - num_bonafide
+        speakers = set(speaker for speaker, _, _ in all_files)
+
+        print("=== General Dataset Summary ===")
         print(f"Total utterances: {total:,}")
         print(f"Bonafide: {num_bonafide:,} ({num_bonafide/total:.2%})")
         print(f"Spoof: {num_spoof:,} ({num_spoof/total:.2%})")
         print(f"Unique speakers: {len(speakers):,}")
+
+        # ===== Triplet Summary =====
+        num_triplets = len(self.triplets)
+        num_bonafide_anchors = sum(1 for _, _, _, _, label in self.triplets if label == 1)
+        num_spoofed_anchors = num_triplets - num_bonafide_anchors
+        triplet_speakers = set(spk for spk, _, _, _, _ in self.triplets)
+
+        print("\n=== Triplet Summary ===")
+        print(f"Total triplets: {num_triplets:,}")
+        print(f"Triplets with bonafide anchors: {num_bonafide_anchors:,} ({num_bonafide_anchors/num_triplets:.2%})")
+        print(f"Triplets with spoofed anchors: {num_spoofed_anchors:,} ({num_spoofed_anchors/num_triplets:.2%})")
+        print(f"Speakers involved in triplets: {len(triplet_speakers):,}")
 
 class BalancedBatchSampler(Sampler):
     """
@@ -226,7 +248,7 @@ if __name__ == "__main__":
         metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
     mfcc_dir = "data/tensors"
 
-    #preprocess_folder(input_path, output_path)
+    #
 
     triplet_dataset = TripletAudioDataset(metadata_path, mfcc_dir)
     
