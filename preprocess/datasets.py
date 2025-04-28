@@ -26,85 +26,18 @@ class TripletAudioDataset(Dataset):
         with open(metadata_path) as f:
             for line in f:
                 parts = line.strip().split()
-                speaker_id = parts[0]
+                speaker_id = int(parts[0].split('_')[-1])
                 file_id = parts[1]
                 label_text = parts[-1]
                 file_name = file_id + ".pt"
                 label = 1 if label_text == "bonafide" else 0
-                self.items.append((file_name, label, speaker_id))
+                self.items.append((file_name, torch.tensor(label), torch.tensor(speaker_id)))
         print(f"Loaded {len(self.items):,} utterances")
 
-
-        ############ ALL BELOW INCLUDED IN PREV AND RECENT ############
-        # self.triplets = [] # Triplets in the form: (speaker, anchor_file, pos_file, neg_file, anchor_label)
-        # self.mfcc_dir = mfcc_dir
-        # self.speaker_to_bonafide = defaultdict(list)
-        # self.speaker_to_spoof = defaultdict(list)
-
-        # # Reads the metadata file
-        # with open(metadata_path, "r") as f:
-        #     for line in f:
-        #         parts = line.strip().split()
-        #         speaker_id = parts[0]
-        #         file_id = parts[1]
-        #         label = parts[5]
-        #         file_name = file_id + ".pt"
-
-        #         if label == "bonafide":
-        #             self.speaker_to_bonafide[speaker_id].append(file_name)
-        #         elif label == "spoof":
-        #             self.speaker_to_spoof[speaker_id].append(file_name)
-        ############ ALL ABOVE INCLUDED IN PREV AND RECENT ############
-
-        ############# RECENT #############
-        # Build triplets
-        # for speaker in self.speaker_to_spoof.keys() | self.speaker_to_bonafide.keys():
-        #     spoofed = self.speaker_to_spoof.get(speaker, [])
-        #     bonafide = self.speaker_to_bonafide.get(speaker, [])
-        #     if len(bonafide) >= 2 and spoofed: # Anchor / Positive => BONAFIDE
-        #         self.build_triplets(spk=speaker, same=bonafide, opp=spoofed, anchor_label=1)
-        #     if len(spoofed) >= 2 and bonafide: # Anchor / Positive => SPOOFED
-        #         self.build_triplets(spk=speaker, same=spoofed, opp=bonafide, anchor_label=0)
-        # print(f"Triplets: {len(self.triplets):,}")
-
-        ############ PREVIOUS ############
-        # num_success = 0.0
-        # num_fails = 0.0
-        # for speaker in self.speaker_to_spoof:
-        #     if speaker not in self.speaker_to_bonafide or len(self.speaker_to_bonafide[speaker]) < 2:
-        #         continue
-        #     for spoof_file in self.speaker_to_spoof[speaker]:
-        #         anchor_file = random.choice(self.speaker_to_bonafide[speaker])
-        #         positive_candidates = [f for f in self.speaker_to_bonafide[speaker] if f != anchor_file]
-        #         if not positive_candidates:
-        #             continue
-        #         positive_file = random.choice(positive_candidates)
-        #         try:
-        #             # unsqueezes allows for a CNN to pass over it, so shape (1, 13, 400)
-        #             anchor = torch.load(os.path.join(self.mfcc_dir, anchor_file)).unsqueeze(0)
-        #             positive = torch.load(os.path.join(self.mfcc_dir, positive_file)).unsqueeze(0)
-        #             negative = torch.load(os.path.join(self.mfcc_dir, spoof_file)).unsqueeze(0)
-        #             print(f"Triplet successfully created!")
-        #             num_success += 1
-        #         except Exception as e:
-        #             print(f"Skipping triplet due to error: {e}")
-        #             num_fails += 1
-        #             continue
-        #         self.triplets.append((anchor, positive, negative))
-        # print(f"{num_success / (num_success + num_fails)} successful conversion rate")
-    
-    # def build_triplets(self, spk, same, opp, anchor_label):
-    #     for anchor_file in same:
-    #         pos_file = random.choice([f for f in same if f != anchor_file])
-    #         neg_file = random.choice(opp)
-    #         self.triplets.append((spk, anchor_file, pos_file, neg_file, anchor_label))
-
     def __len__(self):
-        # return len(self.triplets)
         return len(self.items)
 
     def __getitem__(self, index):
-        # return self.triplets[index]
         file_name, label, speaker = self.items[index]
         tensor = torch.load(os.path.join(self.mfcc_dir, file_name)).unsqueeze(0)
         if self.ablate_idx is not None:
@@ -112,7 +45,7 @@ class TripletAudioDataset(Dataset):
             tensor = torch.cat([tensor[:, :k, :],
              tensor[:, k+1:, :]], dim=1) # size now (1,12,T)
 
-        return tensor, torch.tensor(label), torch.tensor(int(speaker[3:]))
+        return tensor, torch.tensor(label), torch.tensor(speaker)
 
 class BalancedBatchSampler(Sampler):
     """
