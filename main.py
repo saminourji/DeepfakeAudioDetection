@@ -6,7 +6,7 @@ from preprocess.utils import preprocess_folder
 ### BEFORE RUNNING THIS, MAKE SURE YOU RUN   'interact -n 20 -t 02:00:00 -m 20g' ###
 
 
-def flac_to_tensors(input_path, metadata_path, mfcc_dir)
+def flac_to_tensors(input_path, metadata_path, mfcc_dir):
     if not os.path.isdir(metadata_path):
         raise ValueError("THIS SHOULD NOT HAPPEN!")
 
