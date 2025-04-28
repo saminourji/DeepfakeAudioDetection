@@ -10,11 +10,6 @@ import torchaudio
 import torch
 from tqdm import tqdm
 from torchaudio.transforms import MFCC, Resample
-from collections import defaultdict
-import concurrent.futures
-
-import multiprocessing
-multiprocessing.set_start_method("forkserver", force=True)
 
 ### GLOBAL VARIABLES ###
 SAMPLE_RATE = 16000
@@ -26,37 +21,33 @@ mfcc_transform = MFCC(
     melkwargs={"n_fft": 400, "hop_length": 160, "n_mels": 40}
 )
 
-
 # takes a filepath of a .flac file and returns a processed tensor of shape (13, T)
 def preprocess_audio(filepath, max_frames=400):
     waveform, sample_rate = torchaudio.load(filepath)
 
-    if waveform.shape[0] > 1: # "if waveform is NOT mono"
-        waveform = waveform.mean(dim=0, keepdim=True) # convert audio to mono
-    
+    if waveform.shape[0] > 1:  # if waveform is NOT mono
+        waveform = waveform.mean(dim=0, keepdim=True)
+
     if sample_rate != SAMPLE_RATE:
         resampler = Resample(orig_freq=sample_rate, new_freq=SAMPLE_RATE)
         waveform = resampler(waveform)
-    
+
     mfcc = mfcc_transform(waveform)
-    mfcc = (mfcc - mfcc.mean()) / (mfcc.std() + 1e-6) # normalize sample
-    mfcc =  mfcc.squeeze(0)
+    mfcc = (mfcc - mfcc.mean()) / (mfcc.std() + 1e-6)  # normalize sample
+    mfcc = mfcc.squeeze(0)
 
     T = mfcc.shape[1]
 
     if T < max_frames:
         pad_amount = max_frames - T
-        mfcc = torch.nn.functional.pad(mfcc, (0, pad_amount)) # add padding
+        mfcc = torch.nn.functional.pad(mfcc, (0, pad_amount))
     else:
         mfcc = mfcc[:, :max_frames]
-    
-    return mfcc # (13, max_frames) -> defaults to (13, 400)
 
+    return mfcc  # (13, max_frames)
 
-# applies preprocess_audio to a collection of .flac audio files by looping over them
-# saves them to a folder
-def process_file(args):
-    input_path, input_dir, output_dir = args
+# applies preprocess_audio to a single .flac file
+def process_file(input_path, input_dir, output_dir):
     relative_path = os.path.relpath(input_path, input_dir)
     output_path = os.path.join(output_dir, relative_path.replace(".flac", ".pt"))
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -68,7 +59,7 @@ def process_file(args):
         print(f"Skipping {input_path}: {e}")
         return False
 
-def preprocess_folder(input_dir, output_dir, max_workers=None):
+def preprocess_folder(input_dir, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     flac_files = []
     for root, _, files in os.walk(input_dir):
@@ -76,16 +67,11 @@ def preprocess_folder(input_dir, output_dir, max_workers=None):
             if f.endswith('.flac'):
                 flac_files.append(os.path.join(root, f))
 
-    if max_workers is None:
-        max_workers = max(1, os.cpu_count() - 1)  # Use all but 1 CPU core
-
     num_processed = 0
-    args_list = [(f, input_dir, output_dir) for f in flac_files]
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        for success in tqdm(executor.map(process_file, args_list, chunksize=100), total=len(flac_files)):
-            if success:
-                num_processed += 1
+    for f in tqdm(flac_files, desc="Processing files"):
+        if process_file(f, input_dir, output_dir):
+            num_processed += 1
 
     success_rate = num_processed / (len(flac_files) + 1e-6)
     print(f"\nCompleted with success rate: {success_rate:.2%}")
@@ -101,7 +87,6 @@ def extract_file_paths_from_metadata(metadata_path, input_base_dir):
     return file_paths
 
 if __name__ == "__main__":
-
     input_path = "data/ASVspoof2021_LA_eval/flac"
     output_path = "data/tensors"
     if os.path.isdir("data/ASVspoof2021_LA_cm_protocols/"):
