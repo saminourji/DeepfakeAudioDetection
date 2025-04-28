@@ -22,9 +22,9 @@ RUNS TRAINING LOOP
 LR = 1e-3
 BATCH_SIZE = 64
 EPOCHS = 100
-PATIENCE = 10
 MARGIN = 1.0
-ABLATE_IDX = 0 # MUST RANGE FROM 0 TO 12
+ABLATE_IDX = os.environ.get('ABLATE_IDX')
+ABLATE_IDX = int(ABLATE_IDX) if ABLATE_IDX is not None else None
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -61,9 +61,6 @@ def main():
     train_ds = TripletAudioDataset(metadata_path='../data/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt',
                                    mfcc_dir='../data/tensors', ablate_idx=ABLATE_IDX)
 
-    # train_ds = TripletAudioDataset('../data/processed/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt', 
-    # '../data/processed/tensors', ablate_idx = ABLATE_IDX)
-    # val_ds = TripletAudioDataset()
 
     train_loader = DataLoader(
         train_ds,
@@ -71,32 +68,24 @@ def main():
         num_workers=4
     )
 
-    # train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
-    # val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE)
-
     # build model + loss + optimizer
     model = SiameseCNN().to(DEVICE)
     loss_fn = StacLoss(MARGIN)
     optimizer = Adam(model.parameters(),lr=LR, betas=(0.9, 0.999), weight_decay=1e-4)
 
     # training loop (checkpointing included)
-    # best_val, wait = float('inf'),0
+    os.makedirs('saved_models', exist_ok=True)
+
+    total_tr_loss = 0
     for epoch in range(1, EPOCHS+1):
         tr_loss = run_epoch(model, train_loader, loss_fn, optimizer)
-        # va_loss = run_epoch(model, val_loader, loss_fn, None)
-        # print(f'Epoch {epoch:03d} | train_loss: {tr_loss:.4f} | validation_loss: {va_loss:.4f}')
+        total_tr_loss += tr_loss
         print(f'Epoch {epoch:03d} | train_loss: {tr_loss:.4f}')
 
-        # if va_loss < best_val:
-        #     best_val, wait = va_loss, 0
-        #     torch.save(model.state_dict(), 'checkpoint_best.pth')
-        #     print("Saved new best checkpoint")
-        # else:
-        #     wait +=1
-        #     if wait >= PATIENCE:
-        #         print("Early stop because no val improvement in " # early stoppage if we don't see an improvement
-        #               f"{PATIENCE} epochs")                      # will be useful considering size of data set.
-        #         break
+    print(f"Model {ABLATE_IDX} | Avg. Loss: {total_tr_loss / EPOCHS}")
+
+    save_path = f'saved_models/model_{ABLATE_IDX}.pth'
+    torch.save(model.state_dict(), save_path)
 
 
 if __name__ == '__main__':
