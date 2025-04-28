@@ -11,6 +11,8 @@ import torch
 from tqdm import tqdm
 from torchaudio.transforms import MFCC, Resample
 from collections import defaultdict
+import concurrent.futures
+
 
 ### GLOBAL VARIABLES ###
 SAMPLE_RATE = 16000
@@ -52,23 +54,31 @@ def preprocess_audio(filepath, max_frames=400):
 
 # applies preprocess_audio to a collection of .flac audio files by looping over them
 # saves them to a folder
-def preprocess_folder(input_dir, output_dir):
-    os.makedirs(output_dir, exist_ok=True) # ensures that the directory exists
-    flac_files = [f for f in os.listdir(input_dir) if f.endswith('.flac')]
+def preprocess_folder(input_dir, output_dir, max_workers=20):
+    os.makedirs(output_dir, exist_ok=True)
+    flac_files = []
+    for root, _, files in os.walk(input_dir):
+        for f in files:
+            if f.endswith('.flac'):
+                flac_files.append(os.path.join(root, f))
 
-    num_processed = 0
-    num_failed = 0
-    for fname in tqdm(flac_files, desc=f"Processing {input_dir}"):
-        input_path = os.path.join(input_dir, fname)
-        output_path = os.path.join(output_dir, fname.replace(".flac", ".pt"))
-
+    def process_file(input_path):
+        relative_path = os.path.relpath(input_path, input_dir)
+        output_path = os.path.join(output_dir, relative_path.replace(".flac", ".pt"))
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         try:
             mfcc = preprocess_audio(input_path)
             torch.save(mfcc, output_path)
-            print(f"Created tensor for {fname}")
-            num_processed += 1
+            return True
         except Exception as e:
-            print(f"Skipping {fname}: {e}")
-            num_failed += 1
-    
-    print(f"PROCESSED {num_processed / (num_processed + num_failed)}")
+            print(f"Skipping {input_path}: {e}")
+            return False
+
+    num_processed = 0
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        for success in tqdm(executor.map(process_file, flac_files), total=len(flac_files)):
+            if success:
+                num_processed += 1
+
+    success_rate = num_processed / (len(flac_files) + 1e-6)
+    print(f"\nCompleted with success rate: {success_rate:.2%}")
