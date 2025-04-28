@@ -3,6 +3,10 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import torch
+## DELETE LATER
+# torch.set_num_threads(1)
+# torch.set_num_interop_threads(1)
+## DELETE LATER
 import numpy as np
 from torch.utils.data import DataLoader
 from torch.optim import Adam

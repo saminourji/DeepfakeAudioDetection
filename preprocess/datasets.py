@@ -26,12 +26,12 @@ class TripletAudioDataset(Dataset):
         with open(metadata_path) as f:
             for line in f:
                 parts = line.strip().split()
-                speaker_id = parts[0]
+                speaker_id = int(parts[0].split('_')[-1])
                 file_id = parts[1]
                 label_text = parts[-1]
                 file_name = file_id + ".pt"
                 label = 1 if label_text == "bonafide" else 0
-                self.items.append((file_name, label, speaker_id))
+                self.items.append((file_name, torch.tensor(label), torch.tensor(speaker_id)))
         print(f"Loaded {len(self.items):,} utterances")
 
 
@@ -112,7 +112,7 @@ class TripletAudioDataset(Dataset):
             tensor = torch.cat([tensor[:, :k, :],
              tensor[:, k+1:, :]], dim=1) # size now (1,12,T)
 
-        return tensor, torch.tensor(label), torch.tensor(int(speaker[3:]))
+        return tensor, torch.tensor(label), torch.tensor(speaker)
 
 class BalancedBatchSampler(Sampler):
     """
