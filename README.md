@@ -21,3 +21,15 @@ Make sure you have wget installed. If not, you can install it using your systemâ
 - On Mac (with Homebrew): `brew install wget`
 
 This should take **~15 minutes** on Brown's OSCAR GPU grid. Otherwise, timing may vary depending on the device.
+
+3. Run the following commands to run training
+    ```bash
+    cd train
+    python train.py
+    ```
+
+4. Return back to root directory and run the following for validation
+    ```bash
+    cd ..
+    python validate.py
+    ```
