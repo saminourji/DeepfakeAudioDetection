@@ -153,8 +153,3 @@ if __name__ == "__main__":
     else:
         metadata_path = "data/ASVspoof2021_LA_eval/keys/LA/CM/trial_metadata.txt"
     mfcc_dir = "data/tensors"
-
-    triplet_dataset = TripletAudioDataset(metadata_path, mfcc_dir)
-    
-    #for i in range(len(triplet_dataset)):
-        #print(triplet_dataset[i])
