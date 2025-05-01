@@ -38,7 +38,7 @@ class AudioBranch(nn.Module):
             and a dense (fc) layer and normalizes the output.
         
         Output:
-            L2 normalized 128-D vector, which is what StacLoss tries to push/pull together/apart
+            L2 normalized 128-D vector, which is what batch_hard_triplet_loss tries to push/pull together/apart
         """
         x1 = self.conv1(x)
         x2 = self.conv2(x1)
