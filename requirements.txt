@@ -5,3 +5,4 @@ torch==2.1.2
 torchaudio==2.1.2
 tqdm==4.66.5
 numpy==1.26.4
+scikit-learn==1.6.1
