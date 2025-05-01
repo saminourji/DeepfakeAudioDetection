@@ -7,7 +7,6 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 from model.siamese_cnn import SiameseCNN
-from model.stac_loss import StacLoss
 from preprocess.datasets import TripletAudioDataset, BalancedBatchSampler, batch_hard_triplet_loss
 
 """
@@ -42,7 +41,7 @@ def run_epoch(model, loader, loss_fn, optimizer=None):
         speaker = speaker.to(DEVICE)
 
         embedding = model.encode(x) # shape is (B, dimensionality of embedding)
-        loss = batch_hard_triplet_loss(embedding, y, speaker, margin=MARGIN)
+        loss = loss_fn(embedding, y, speaker, margin=MARGIN)
         if is_train:
             optimizer.zero_grad()
             loss.backward()
@@ -66,7 +65,7 @@ def main():
 
     # build model + loss + optimizer
     model = SiameseCNN().to(DEVICE)
-    loss_fn = StacLoss(MARGIN)
+    loss_fn = batch_hard_triplet_loss
     optimizer = Adam(model.parameters(),lr=LR, betas=(0.9, 0.999), weight_decay=1e-4)
 
     # training loop (checkpointing included)
