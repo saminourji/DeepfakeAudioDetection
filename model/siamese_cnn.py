@@ -67,8 +67,3 @@ class SiameseCNN(nn.Module):
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """ Method to produce a single feature embedding, called once for each of anchor, positive, and negative """
         return self.branch(x)
-
-    def predict_real_fake(self, x1: torch.Tensor, x2: torch.Tensor, threshold: float = 1.0):
-        """ Method that predicts 0 (fake/dissimilar) or 1 (real/similar) """
-        dist = self.forward(x1, x2)
-        return (dist <= threshold).long() # 1 = real/similar, 0 = fake/dissimilar
