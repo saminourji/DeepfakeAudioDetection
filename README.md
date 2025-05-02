@@ -1,9 +1,5 @@
 # DeepfakeAudioDetection
 
-<p>
-  <img src="poster:report/poster.jpg" alt="Poster" width="500"/>
-</p>
-
 ## Viewing the Results
 
 Please see the `poster:report` directory to view the poster and reports!
