@@ -1,5 +1,7 @@
 # DeepfakeAudioDetection
 
+![Poster](poster:report/poster.jpg)
+
 ## Viewing the Results
 
 Please see the `poster:report` directory to view the poster and reports!
