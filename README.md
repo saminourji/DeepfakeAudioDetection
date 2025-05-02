@@ -1,6 +1,8 @@
 # DeepfakeAudioDetection
 
-![Poster](poster:report/poster.jpg)
+<p>
+  <img src="poster:report/poster.jpg" alt="Poster" width="500"/>
+</p>
 
 ## Viewing the Results
 
