@@ -1,5 +1,9 @@
 # DeepfakeAudioDetection
 
+## Viewing the Results
+
+Please see the `poster:report` directory to view the poster and reports!
+
 ## Downloading the Dataset 
 
 1. Download the dataset by running the following command in your terminal:
