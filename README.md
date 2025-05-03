@@ -2,7 +2,7 @@
 
 ## Viewing the Results
 
-Please see the `poster:report` directory to view the poster and reports!
+Please see the `poster:report:checkins` directory to view the poster, reports, and intermediary check-ins!
 
 ## Downloading the Dataset 
 
